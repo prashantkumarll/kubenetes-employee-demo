@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: sql-debugger
+  name: sql-debugger
+spec:
+  containers:
+  - image: mcr.microsoft.com/mssql-tools
+    name: sql-debugger
+    command: ["sleep", "180"]
+  restartPolicy: Always
+  tolerations:
+  - "key" : "CriticalAddonsOnly"
+    "operator": "Equal"
+    "value" : "true"
+    "effect": "NoSchedule"

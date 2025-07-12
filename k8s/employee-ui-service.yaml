@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: employee-ui-service
+spec:
+  selector:
+    app: employee-ui
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer  # Or ClusterIP / NodePort as per your cluster setup

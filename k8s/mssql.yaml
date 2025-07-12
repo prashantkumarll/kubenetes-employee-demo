@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mssql-statefulset
+  labels:
+    app: mssql
+spec:  
+  serviceName: "mssql" # Must match the headless service name
+  replicas: 1 # For a single MSSQL instance. For HA, you'd need more complex setup (e.g., Always On Availability Groups)
+  selector:
+    matchLabels:
+      app: mssql
+  template:
+    metadata:
+      labels:
+        app: mssql
+    spec:      
+      terminationGracePeriodSeconds: 30 # Graceful shutdown period
+      nodeSelector:
+        agentpool : agentpool
+      tolerations: 
+      - key: "CriticalAddonsOnly"
+        operator: "Equal"
+        value: "true"
+      securityContext:
+        fsGroup: 10001 # Set the file system group for the volume to the mssql user's group ID
+      containers:
+        - name: mssql
+          image: mcr.microsoft.com/mssql/server:2019-latest # Using SQL Server 2019 Linux image
+          ports:
+            - containerPort: 1433
+          env:
+            - name: ACCEPT_EULA
+              value: "Y" # Required to accept the End-User License Agreement
+            - name: MSSQL_SA_PASSWORD
+              # IMPORTANT: For production, use a Kubernetes Secret here:
+              # valueFrom:
+              #   secretKeyRef:
+              #     name: mssql-secret
+              #     key: SA_PASSWORD
+              value: "Admin@123*" # Replace with a strong password
+            - name: MSSQL_PID
+              value: "Developer" # Or "Express", "Standard", "Enterprise"
+          volumeMounts:
+            - name: mssqldb
+              mountPath: /var/opt/mssql/data # Mount path for SQL Server data
+  volumeClaimTemplates:
+    - metadata:
+        name: mssqldb
+      spec:
+        accessModes: ["ReadWriteOnce"] # Can be mounted as read-write by a single node
+        resources:
+          requests:
+            storage: 1Gi # Request 10GB of persistent storage
