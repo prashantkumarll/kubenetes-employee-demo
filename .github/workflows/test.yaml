@@ -23,7 +23,7 @@ jobs:
       - name: Parse triggers.json
         id: parse_triggers
         run: |
-          TRIGGERS=$(jq -c '.triggers[]' test.json)
+          TRIGGERS=$(jq -c '.triggers' test.json)
           echo "triggers=$TRIGGERS" >> $GITHUB_OUTPUT
 
     outputs:
