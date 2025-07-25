@@ -1,0 +1,57 @@
+name: Manage Synapse Triggers
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Operation mode: start or stop triggers'
+        required: true
+        default: 'start'
+        type: choice
+        options:
+          - start
+          - stop
+
+jobs:
+  manage-triggers:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Parse triggers.json
+        id: parse_triggers
+        run: |
+          TRIGGERS=$(jq -c '.triggers[]' test.json)
+          echo "triggers=$TRIGGERS" >> $GITHUB_OUTPUT
+
+    outputs:
+      triggers: ${{ steps.parse_triggers.outputs.triggers }}
+
+  trigger-actions:
+    needs: manage-triggers
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        trigger: ${{ fromJson(needs.manage-triggers.outputs.triggers) }}
+
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Manage trigger ${{ matrix.trigger.name }}
+        run: |
+          if [ "${{ github.event.inputs.mode }}" == "start" ]; then
+            echo "Starting trigger: ${{ matrix.trigger.name }}"
+            az synapse trigger start --workspace-name <your-synapse-workspace> --name ${{ matrix.trigger.name }}
+          elif [ "${{ github.event.inputs.mode }}" == "stop" ]; then
+            echo "Stopping trigger: ${{ matrix.trigger.name }}"
+            az synapse trigger stop --workspace-name <your-synapse-workspace> --name ${{ matrix.trigger.name }}
+          else
+            echo "Invalid mode"
+            exit 1
+          fi
