@@ -1,0 +1,8 @@
+{
+  "triggers": [
+    { "name": "trigger1" },
+    { "name": "trigger2" },
+    { "name": "trigger3" },
+    { "name": "trigger4" }
+  ]
+}
